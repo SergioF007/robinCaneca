@@ -24,11 +24,14 @@ p = []
 t = []
 nombre = []
 material = []
+def  leer_arduino():
+   lineBytes = arduino.readline()
+   line = lineBytes.decode('utf-8').strip()
+   print(line)
+   
 try:
   while True:
-     lineBytes = arduino.readline()
-     line = lineBytes.decode('utf-8').strip()
-     print(line)
+     leer_arduino()
      # Separamos los datos recibidos mediante el seprador "|"
      #capacitivo, inductivo, ultrasonico, peso, sFin = line.split("|", 4) 
      s1,s2,s3,s4,sFin = line.split("|", 4)    
