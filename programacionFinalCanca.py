@@ -1,83 +1,58 @@
-#sudo apt-get install python3-serial  ó pip install serial
 import serial
-#import Arduino~
-import pandas as pd
-#sudo apt-get install csv python3  ó  sudo pip3 install python-csv
-import csv
-#sudo apt-get  install python3-numpy
-import numpy as np
-from time import sleep, strftime, time
-from datetime import time as tm
-from datetime import datetime, date, timedelta
-#	sudo apt install python3-picamera
-#from picamera import PiCamera
+from datetime import date
+
 from time import sleep
-c = []
-i = []
-u = []
-p = []
-t = []
-nombre = []
-material = []
 
-def  leer_arduino():
-   arduino = serial.Serial('/dev/ttyACM0',9600)  
-   arduino.setDTR(False)
-   sleep(1)
-   arduino.flushInput()
-   arduino.setDTR(True)
-   lineBytes = arduino.readline()
-   line = lineBytes.decode('utf-8').strip()
-   print(line)
-
-def  leer_dato():
-   dato = []
-   with open("./data/entrada.txt","r") as f:
-     for linea in f:
-        dato.append(linea)
-   return dato
+NUM_SENSORS = 4
+SEPARATOR_CHARACTER = "|"
 
 
-def principal():
-   try:
-      while True:
+def leer_arduino():
+    arduino = serial.Serial('/dev/ttyACM0', 9600)
+    arduino.setDTR(False)
+    sleep(1)
+    arduino.flushInput()
+    arduino.setDTR(True)
+    try:
+        while True:
+            lineBytes = arduino.readline()
+            linea = lineBytes.decode('utf-8').strip()
+            linea = line_to_str(linea)
+            to_csv_line(linea)
+    except keyboardInterrupt:
+        arduino.close()
+        exit()
 
-         #leer_arduino()
-         # Separamos los datos recibidos mediante el seprador "|"
-         #capacitivo, inductivo, ultrasonico, peso, sFin = line.split("|", 4) 
-         s1,s2,s3,s4,sFin = line.split("|", 4)    
-         capacitivo = s1
-         inductivo = s2
-         ultrasonico =s3
-         peso = s4 
-         c.append(int(capacitivo))
-         i.append(int(inductivo)) 
-         u.append(int(ultrasonico))
-         p.append (float(peso))
-         t.append(strftime("%H:%M:%S")) # %Y-%m-%d 
-         print("nombre")
-         nombre.append(str(input()))
-         print("material")
-         material.append(str(input()))
-         tiempo=np.array(t)
-         sensor1=np.array(c)
-         sensor2=np.array(i)
-         sensor3=np.array(u)
-         sensor4=np.array(p)
-         nombreObjeto=np.array(nombre)
-         tipoMaterial=np.array(material)
-         data={'tiempo': tiempo,'Capacitivo': sensor1, 'inductivo': sensor2, 'ultrasonico': sensor3, 'peso': sensor4, 'nombreObjeto': nombre, 'tipoMaterial': material }
-         df=pd.DataFrame(data)
-         print(df)
-         # nombreArchivo = strftime("%Y-%M-%D")
-         nombreArchivo = str(datetime.now().year)+"-"+str(+datetime.now().month)+"-"+str(datetime.now().day)
-         df.to_csv(nombreArchivo+"MatrizSensores.csv")
-         df.to_excel(nombreArchivo+"Matriz.xlsx")
-   except keyboardInterrupt:
-      arduino.close()
-      exit()
+
+def line_to_str(line):
+    line = line.replace(" ", "")
+    line = line.strip('\n')
+    str_line = ""
+    sensors_info = line.split(SEPARATOR_CHARACTER, NUM_SENSORS)
+    if len(sensors_info) == NUM_SENSORS:
+        sensors_info.append(str(date.today()))
+        y_field = input('A que elemento pertenece? ')
+        sensors_info.append(y_field)
+        str_line = ';'.join(map(str, sensors_info))
+    return str_line
+
+
+def to_csv_line(data):
+    with open('data/salida.csv', "a") as f:
+        f.write('\n')
+        f.write(data)
+
+
+def leer_dato():
+    dato = []
+    with open("./data/entrada.txt","r") as f:
+        for linea in f:
+            linea = line_to_str(linea)
+            to_csv_line(linea)
+        return dato
+
 
 if __name__ == "__main__":
-   contenido =  leer_dato()
-   print(contenido)
-
+    # para leer datos del archivo uso la funcion leer_dato()
+    # para leer datos del arduino usar la funcion leer_arduino()
+    leer_dato()
